@@ -1,3 +1,4 @@
+const ObjectId = require('mongodb').ObjectId;
 const router = require('koa-router')()
 
 router.prefix('/group')
@@ -15,21 +16,20 @@ router.post('/create', async function (ctx, next) {
         }
     } else {
         try {
-            const group = await DB.findOne('group', {
+            let group = await DB.findOne('group', {
                 name,
                 status: 1
             })
             if (!group) {
-                const tags = tagList.map(item => item.name)
                 group = await DB.insert('group', {
                     name,
                     introduction,
-                    click: 0,
-                    tags
+                    click: 0
                 })
                 tagList.forEach(async tag => {
                     await DB.insert('tag_to_group', {
-                        tag_id : tag._id,
+                        tag_id: tag._id,
+                        tag_name: tag.name,
                         group_id: group._id
                     })
                 })
@@ -46,6 +46,7 @@ router.post('/create', async function (ctx, next) {
                 }
             }
         } catch (err) {
+            console.log(err);
             ctx.body = {
                 status: 0,
                 err: '创建游戏组失败',
@@ -59,28 +60,44 @@ router.post('/update', async function (ctx, next) {
     const {
         _id,
         name = '',
-        introduction = null
+        introduction = '',
+        tagList = []
     } = await ctx.request.body;
-    if (name === '' && introduction === null) {
+    if (name === '') {
         ctx.body = {
             status: 0,
-            err: '游戏组的更新数据未传入',
+            err: '游戏组的必须有名称',
             data: {}
         }
     } else {
-        const updateObj = {}
-        if (name !== null) updateObj.name = name;
-        if (introduction !== null) updateObj.introduction = introduction
         try {
+            await DB.updateAll('tag_to_group', {
+                group_id: ObjectId(_id),
+                status: 1
+            }, {
+                status: 0
+            })
+            tagList.forEach(async tag => {
+                await DB.insert('tag_to_group', {
+                    group_id: ObjectId(_id),
+                    tag_id: ObjectId(tag._id),
+                    tag_name: tag.name
+                })
+            })
+
             await DB.update('group', {
-                _id
-            }, updateObj)
+                _id: ObjectId(_id)
+            }, {
+                name,
+                introduction
+            })
             ctx.body = {
                 status: 1,
                 msg: '更新游戏组成功',
                 data: {}
             }
         } catch (err) {
+            console.log(err);
             ctx.body = {
                 status: 0,
                 err: '更新游戏组失败',
@@ -95,15 +112,27 @@ router.get('/fetch', async function (ctx, next) {
         page = 1, limit = 10
     } = ctx.query
     try {
-        const groupList = await DB.pagination('group', {
+        let groupList = await DB.pagination('group', {
             status: 1
         }, page, limit)
+        groupList = await Promise.all(groupList.map(async item => {
+            const res = {
+                ...item
+            }
+            res.tags = await DB.find('tag_to_group', {
+                group_id: ObjectId(item._id),
+                status: 1
+            })
+            res.tags = res.tags.map(tag => tag.tag_name)
+            return res;
+        }))
         ctx.body = {
             status: 1,
             msg: '获取游戏组列表成功',
             data: groupList
         }
     } catch (err) {
+        console.log(err);
         ctx.body = {
             status: 0,
             err: "获取游戏组列表失败",
@@ -125,8 +154,14 @@ router.get('/get', async function (ctx, next) {
     } else {
         try {
             const group = await DB.findOne('group', {
-                _id
+                _id: ObjectId(_id),
+                status: 1
             })
+            group.tags = await DB.find('tag_to_group', {
+                group_id: ObjectId(group._id),
+                status: 1
+            })
+            group.tags = group.tags.map(item => item.tag_name)
             ctx.body = {
                 status: 1,
                 msg: '获取游戏组成功',
@@ -154,8 +189,14 @@ router.post('/delete', async function (ctx, next) {
         }
     } else {
         try {
+            await DB.updateAll('tag_to_group', {
+                group_id: ObjectId(_id),
+                status: 1
+            }, {
+                status: 0
+            })
             await DB.update('group', {
-                _id,
+                _id: ObjectId(_id),
             }, {
                 status: 0
             })
@@ -165,6 +206,7 @@ router.post('/delete', async function (ctx, next) {
                 data: {}
             }
         } catch (err) {
+            console.log(err);
             ctx.body = {
                 status: 0,
                 err: '删除游戏组失败',

@@ -32,7 +32,7 @@ class Db {
     data.status = 1;
     return new Promise(async (resolve, reject) => {
       const db = await this.connect();
-      db.collection(collectionName).insertOne(data, (err, res) => {
+      await db.collection(collectionName).insertOne(data, (err, res) => {
         if (err) reject(err);
         else resolve(res.ops[0]);
       });
@@ -41,7 +41,7 @@ class Db {
   async remove(collectionName, json) {
     return new Promise(async (resolve, reject) => {
       const db = await this.connect();
-      const res = db.collection(collectionName).removeOne(json, (err, data) => {
+      const res = await db.collection(collectionName).removeOne(json, (err, data) => {
         if (err) reject(err);
         else resolve(data);
       });
@@ -50,7 +50,7 @@ class Db {
   async find(collectionName, query) {
     return new Promise(async (resolve, reject) => {
       const db = await this.connect();
-      const res = db.collection(collectionName).find(query);
+      const res = await db.collection(collectionName).find(query);
       res.toArray((err, data) => {
         if (err) reject(err);
         else resolve(data);
@@ -60,7 +60,7 @@ class Db {
   async findOne(collectionName, query) {
     return new Promise(async (resolve, reject) => {
       const db = await this.connect();
-      const res = db.collection(collectionName).findOne(query, (err, data) => {
+      const res = await db.collection(collectionName).findOne(query, (err, data) => {
         if (err) reject(err);
         else resolve(data);
       });
@@ -70,7 +70,21 @@ class Db {
     json2.update_time = Date.now();
     return new Promise(async (resolve, reject) => {
       const db = await this.connect();
-      db.collection(collectionName).updateOne(
+      await db.collection(collectionName).updateOne(
+        json1,
+        { $set: json2 },
+        (err, res) => {
+          if (err) reject(err);
+          else resolve(res);
+        }
+      );
+    });
+  }
+  async updateAll(collectionName, json1, json2) {
+    json2.update_time = Date.now();
+    return new Promise(async (resolve, reject) => {
+      const db = await this.connect();
+      await db.collection(collectionName).updateMany(
         json1,
         { $set: json2 },
         (err, res) => {
@@ -84,7 +98,7 @@ class Db {
     return new Promise(async (resolve, reject) => {
       const db = await this.connect();
       console.log(page, limit, page * limit, limit * 1);
-      const res = db
+      const res = await db
         .collection(collectionName)
         .find(query)
         .skip(page * limit)

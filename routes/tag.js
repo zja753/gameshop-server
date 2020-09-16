@@ -14,7 +14,7 @@ router.post('/create', async function (ctx, next) {
         }
     } else {
         try {
-            const tag = await DB.findOne('tag', {
+            let tag = await DB.findOne('tag', {
                 name,
                 status: 1
             })
@@ -31,7 +31,7 @@ router.post('/create', async function (ctx, next) {
             } else {
                 ctx.body = {
                     status: 0,
-                    msg: '标签已存在',
+                    err: '标签已存在',
                     data: tag
                 }
             }

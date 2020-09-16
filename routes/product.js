@@ -24,12 +24,12 @@ router.post('/create', async function (ctx, next) {
         }
     } else {
         try {
-            const product = await DB.findOne('product', {
+            let product = await DB.findOne('product', {
                 name,
                 status: 1
             })
             if (!product) {
-                const product = await DB.insert('product', {
+                product = await DB.insert('product', {
                     group_id,
                     name,
                     name_en,
