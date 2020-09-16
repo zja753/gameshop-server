@@ -1,10 +1,16 @@
+const {
+    log
+} = require('debug');
+
 const router = require('koa-router')()
 
 router.prefix('/product')
 
 router.post('/create', async function (ctx, next) {
+    console.log(ctx.request.body);
     const {
         group_id = null,
+            group_name = null,
             name = '',
             name_en = '',
             brief_introduction = '',
@@ -13,9 +19,23 @@ router.post('/create', async function (ctx, next) {
             discount = 1,
             is_dlc = null,
             is_demo = null,
-            rate = null,
+            rate = 10,
             sale_date = null
     } = await ctx.request.body;
+    console.log({
+        group_id,
+        group_name,
+        name,
+        name_en,
+        brief_introduction,
+        introduction,
+        price,
+        discount,
+        is_dlc,
+        is_demo,
+        rate,
+        sale_date
+    });
     if (group_id === null || name === '' || price === null || is_dlc === null || is_demo === null || rate === null || sale_date === null) {
         ctx.body = {
             status: 0,
@@ -31,6 +51,7 @@ router.post('/create', async function (ctx, next) {
             if (!product) {
                 product = await DB.insert('product', {
                     group_id,
+                    group_name,
                     name,
                     name_en,
                     brief_introduction,

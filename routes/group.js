@@ -109,7 +109,7 @@ router.post('/update', async function (ctx, next) {
 
 router.get('/fetch', async function (ctx, next) {
     const {
-        page = 1, limit = 10
+        page = 0, limit = 10
     } = ctx.query
     try {
         let groupList = await DB.pagination('group', {
