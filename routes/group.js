@@ -28,9 +28,9 @@ router.post('/create', async function (ctx, next) {
                 })
                 tagList.forEach(async tag => {
                     await DB.insert('tag_to_group', {
-                        tag_id: tag._id,
+                        tag_id: ObjectId(tag._id),
                         tag_name: tag.name,
-                        group_id: group._id
+                        group_id: ObjectId(group._id)
                     })
                 })
                 ctx.body = {
@@ -189,21 +189,33 @@ router.post('/delete', async function (ctx, next) {
         }
     } else {
         try {
-            await DB.updateAll('tag_to_group', {
+            const products = await DB.find('product', {
                 group_id: ObjectId(_id),
                 status: 1
-            }, {
-                status: 0
             })
-            await DB.update('group', {
-                _id: ObjectId(_id),
-            }, {
-                status: 0
-            })
-            ctx.body = {
-                status: 1,
-                msg: '删除游戏组成功',
-                data: {}
+            if (products.length === 0) {
+                await DB.updateAll('tag_to_group', {
+                    group_id: ObjectId(_id),
+                    status: 1
+                }, {
+                    status: 0
+                })
+                await DB.update('group', {
+                    _id: ObjectId(_id),
+                }, {
+                    status: 0
+                })
+                ctx.body = {
+                    status: 1,
+                    msg: '删除游戏组成功',
+                    data: {}
+                }
+            } else {
+                ctx.body = {
+                    status: 0,
+                    err: '游戏组尚关联着游戏，请先删除联系',
+                    data: {}
+                }
             }
         } catch (err) {
             console.log(err);

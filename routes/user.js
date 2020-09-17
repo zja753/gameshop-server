@@ -9,13 +9,14 @@ router.post("/register", async (ctx) => {
   const {
     password,
     email,
-    nickName = "admin"
+    nickName = "admin",
+    role = 'user'
   } = await ctx.request.body;
-  console.log(ctx.request);
   console.log({
     password,
     email,
-    nickName
+    nickName,
+    role
   });
   if (password.length >= 6) {
     const user = await DB.findOne("user", {
@@ -25,6 +26,7 @@ router.post("/register", async (ctx) => {
     if (user === null) {
       const hashPassword = bcrypt.hashSync(password);
       const res = await DB.insert("user", {
+        role,
         password: hashPassword,
         email,
         nickName,

@@ -159,15 +159,28 @@ router.post('/delete', async function (ctx, next) {
     }
   } else {
     try {
-      await DB.update('tag', {
-        _id: ObjectId(_id),
-      }, {
-        status: 0
+      const relations = await DB.find('tag_to_group', {
+        tag_id: ObjectId(_id),
+        status: 1
       })
-      ctx.body = {
-        status: 1,
-        msg: '删除标签成功',
-        data: {}
+      console.log(relations);
+      if (relations.length === 0) {
+        await DB.update('tag', {
+          _id: ObjectId(_id),
+        }, {
+          status: 0
+        })
+        ctx.body = {
+          status: 1,
+          msg: '删除标签成功',
+          data: {}
+        }
+      } else {
+        ctx.body = {
+          status: 0,
+          err: '此标签与游戏组尚有关联，请先删除关联',
+          data: {}
+        }
       }
     } catch (err) {
       ctx.body = {

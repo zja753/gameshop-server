@@ -1,6 +1,9 @@
 const {
     log
 } = require('debug');
+const {
+    ObjectId
+} = require('mongodb');
 
 const router = require('koa-router')()
 
@@ -50,7 +53,7 @@ router.post('/create', async function (ctx, next) {
             })
             if (!product) {
                 product = await DB.insert('product', {
-                    group_id,
+                    group_id: ObjectId(group_id),
                     group_name,
                     name,
                     name_en,
@@ -89,6 +92,7 @@ router.post('/update', async function (ctx, next) {
     const {
         _id = null,
             group_id = null,
+            group_name,
             name = '',
             name_en = '',
             brief_introduction = '',
@@ -109,7 +113,8 @@ router.post('/update', async function (ctx, next) {
         }
     } else {
         const updateObj = {}
-        if (group_id !== null) updateObj.group_id = group_id;
+        if (group_id !== null) updateObj.group_id = ObjectId(group_id);
+        if (group_name !== null) updateObj.group_name = group_name
         if (name !== null) updateObj.name = name
         if (name_en !== null) updateObj.name_en = name_en
         if (brief_introduction !== null) updateObj.brief_introduction = brief_introduction
@@ -122,7 +127,7 @@ router.post('/update', async function (ctx, next) {
         if (sale_date !== null) updateObj.sale_date = sale_date
         try {
             await DB.update('product', {
-                _id
+                _id: ObjectId(_id)
             }, updateObj)
             ctx.body = {
                 status: 1,
@@ -174,7 +179,7 @@ router.get('/get', async function (ctx, next) {
     } else {
         try {
             const product = await DB.findOne('product', {
-                _id
+                _id: ObjectId(_id)
             })
             ctx.body = {
                 status: 1,
@@ -204,7 +209,7 @@ router.post('/delete', async function (ctx, next) {
     } else {
         try {
             await DB.update('product', {
-                _id,
+                _id: ObjectId(_id),
             }, {
                 status: 0
             })
