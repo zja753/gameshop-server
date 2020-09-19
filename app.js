@@ -15,6 +15,7 @@ const tag = require('./routes/tag')
 const order = require('./routes/order')
 const group = require('./routes/group')
 const product = require('./routes/product')
+const test = require('./routes/test')
 
 // 跨域
 app.use(cors());
@@ -24,7 +25,7 @@ onerror(app)
 
 // middlewares
 app.use(bodyparser({
-  enableTypes:['json', 'form', 'text']
+  enableTypes: ['json', 'form', 'text']
 }))
 app.use(json())
 app.use(logger())
@@ -50,6 +51,7 @@ app.use(tag.routes(), tag.allowedMethods())
 app.use(order.routes(), order.allowedMethods())
 app.use(group.routes(), group.allowedMethods())
 app.use(product.routes(), product.allowedMethods())
+app.use(test.routes(), test.allowedMethods())
 
 // error-handling
 app.on('error', (err, ctx) => {
