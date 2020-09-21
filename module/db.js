@@ -14,8 +14,9 @@ class Db {
         resolve(this.dbClient);
       }
       MongoClient.connect(
-        Config.url,
-        { useUnifiedTopology: true },
+        Config.url, {
+          useUnifiedTopology: true
+        },
         (err, client) => {
           if (err) {
             reject(err);
@@ -71,8 +72,9 @@ class Db {
     return new Promise(async (resolve, reject) => {
       const db = await this.connect();
       await db.collection(collectionName).updateOne(
-        json1,
-        { $set: json2 },
+        json1, {
+          $set: json2
+        },
         (err, res) => {
           if (err) reject(err);
           else resolve(res);
@@ -85,8 +87,9 @@ class Db {
     return new Promise(async (resolve, reject) => {
       const db = await this.connect();
       await db.collection(collectionName).updateMany(
-        json1,
-        { $set: json2 },
+        json1, {
+          $set: json2
+        },
         (err, res) => {
           if (err) reject(err);
           else resolve(res);
@@ -109,6 +112,17 @@ class Db {
       });
     });
   }
+  async getCount(collectionName, query) {
+    return new Promise(async (resolve, reject) => {
+      const db = await this.connect();
+      const res = await db
+        .collection(collectionName)
+        .find(query).count();
+      resolve(res);
+    });
+  }
+
+
 }
 
 DB = new Db();

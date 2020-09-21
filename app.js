@@ -16,6 +16,7 @@ const order = require('./routes/order')
 const group = require('./routes/group')
 const product = require('./routes/product')
 const test = require('./routes/test')
+const getProduct = require('./routes/api/getProduct')
 
 // 跨域
 app.use(cors());
@@ -52,6 +53,7 @@ app.use(order.routes(), order.allowedMethods())
 app.use(group.routes(), group.allowedMethods())
 app.use(product.routes(), product.allowedMethods())
 app.use(test.routes(), test.allowedMethods())
+app.use(getProduct.routes(), getProduct.allowedMethods())
 
 // error-handling
 app.on('error', (err, ctx) => {
