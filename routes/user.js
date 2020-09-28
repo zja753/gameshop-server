@@ -10,7 +10,7 @@ router.post("/register", async (ctx) => {
     password,
     email,
     nickName = "admin",
-    role = 'user'
+    role = 'user' // 这里最好每种角色一个路由，或者还有别的更好的方式，否则别人抓个包改一下role就获得权限了
   } = await ctx.request.body;
   console.log({
     password,
@@ -99,7 +99,6 @@ router.post("/login", async (ctx) => {
 });
 
 router.get("/getUserInfo", async (ctx) => {
-  console.log(1234);
   const {
     _id
   } = ctx.query;

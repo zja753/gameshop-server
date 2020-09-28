@@ -192,4 +192,22 @@ router.post('/delete', async function (ctx, next) {
   }
 })
 
+router.get('/count', async function (ctx, next) {
+  const count = await DB.getCount('tag', {
+    status: 1
+  })
+  if (count) {
+    ctx.body = {
+      status: 1,
+      msg: '获得标签数量',
+      data: count
+    }
+  } else {
+    ctx.body = {
+      status: 0,
+      err: '未能获得标签数量',
+      data: null
+    }
+  }
+})
 module.exports = router

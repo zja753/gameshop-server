@@ -146,7 +146,7 @@ router.post('/update', async function (ctx, next) {
 
 router.get('/fetch', async function (ctx, next) {
     const {
-        page = 1, limit = 10
+        page = 0, limit = 10
     } = ctx.query
     try {
         const productList = await DB.pagination('product', {
@@ -224,6 +224,25 @@ router.post('/delete', async function (ctx, next) {
                 err: '删除游戏失败',
                 data: err
             }
+        }
+    }
+})
+
+router.get('/count', async function (ctx, next) {
+    const count = await DB.getCount('product', {
+        status: 1
+    })
+    if (count) {
+        ctx.body = {
+            status: 1,
+            msg: '获得游戏数量',
+            data: count
+        }
+    } else {
+        ctx.body = {
+            status: 0,
+            err: '未能获得游戏数量',
+            data: null
         }
     }
 })

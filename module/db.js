@@ -42,7 +42,7 @@ class Db {
   async remove(collectionName, json) {
     return new Promise(async (resolve, reject) => {
       const db = await this.connect();
-      const res = await db.collection(collectionName).removeOne(json, (err, data) => {
+      await db.collection(collectionName).removeOne(json, (err, data) => {
         if (err) reject(err);
         else resolve(data);
       });
