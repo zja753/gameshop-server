@@ -104,12 +104,13 @@ router.post('/pay', async function (ctx, next) {
 
 router.get('/fetch', async function (ctx, next) {
     const {
-        page = 1, limit = 10
+        user_id
     } = ctx.query
     try {
-        const orderList = await DB.pagination('order', {
-            status: 1
-        }, page, limit)
+        const orderList = await DB.find('order', {
+            user_id
+        })
+        // console.log(orderList);
         ctx.body = {
             status: 1,
             msg: '获取订单列表成功',
@@ -129,29 +130,29 @@ router.get('/get', async function (ctx, next) {
         _id = null
     } = ctx.query
     if (_id === null) {
-        ctx.body = {
+        return ctx.body = {
             status: 0,
             err: "获取订单_id不能为空",
             data: {}
         }
-    } else {
-        try {
-            const order = await DB.findOne('order', {
-                _id
-            })
-            ctx.body = {
-                status: 1,
-                msg: '获取订单成功',
-                data: order
-            }
-        } catch (err) {
-            ctx.body = {
-                status: 0,
-                err: "获取订单失败",
-                data: err
-            }
+    }
+    try {
+        const order = await DB.findOne('order', {
+            _id: ObjectId(_id),
+        })
+        return ctx.body = {
+            status: 1,
+            msg: '获取订单成功',
+            data: order
+        }
+    } catch (err) {
+        ctx.body = {
+            status: 0,
+            err: "获取订单失败",
+            data: err
         }
     }
+
 })
 
 router.post('/delete', async function (ctx, next) {

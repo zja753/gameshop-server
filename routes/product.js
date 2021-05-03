@@ -13,17 +13,17 @@ router.post('/create', async function (ctx, next) {
     console.log(ctx.request.body);
     const {
         group_id = null,
-            group_name = null,
-            name = '',
-            name_en = '',
-            brief_introduction = '',
-            introduction = '',
-            price = null,
-            discount = 1,
-            is_dlc = null,
-            is_demo = null,
-            rate = 10,
-            sale_date = null
+        group_name = null,
+        name = '',
+        name_en = '',
+        brief_introduction = '',
+        introduction = '',
+        price = null,
+        discount = 1,
+        is_dlc = null,
+        is_demo = null,
+        rate = 10,
+        sale_date = null
     } = await ctx.request.body;
     console.log({
         group_id,
@@ -91,18 +91,18 @@ router.post('/create', async function (ctx, next) {
 router.post('/update', async function (ctx, next) {
     const {
         _id = null,
-            group_id = null,
-            group_name,
-            name = '',
-            name_en = '',
-            brief_introduction = '',
-            introduction = '',
-            price = null,
-            discount = 1,
-            is_dlc = null,
-            is_demo = null,
-            rate = null,
-            sale_date = null
+        group_id = null,
+        group_name,
+        name = '',
+        name_en = '',
+        brief_introduction = '',
+        introduction = '',
+        price = null,
+        discount = 1,
+        is_dlc = null,
+        is_demo = null,
+        rate = null,
+        sale_date = null
     } = await ctx.request.body;
 
     if (_id === null) {
@@ -243,6 +243,122 @@ router.get('/count', async function (ctx, next) {
             status: 0,
             err: '未能获得游戏数量',
             data: null
+        }
+    }
+})
+
+router.get('/fetchByUserId', async function (ctx, next) {
+    const { user_id } = ctx.query
+    try {
+        const productList = await DB.find('product_to_user', {
+            user_id
+        })
+        const res = [];
+        const promiseList = [];
+        productList.forEach(item => {
+            promiseList.push(new Promise(async (resolve) => {
+                const { product_id } = item;
+                const product = await DB.findOne('product', { _id: ObjectId(product_id) })
+                res.push(product);
+                resolve();
+            }))
+        })
+        await Promise.all(promiseList);
+        ctx.body = {
+            status: 1,
+            msg: '获取游戏列表成功',
+            data: res
+        }
+    } catch (err) {
+        ctx.body = {
+            status: 0,
+            err: "获取游戏列表失败",
+            data: err
+        }
+    }
+})
+
+router.get('/recommend', async function (ctx, next) {
+    const { user_id } = ctx.query
+    try {
+        const productList = await DB.find('product_to_user', {
+            user_id
+        })
+        const promiseList = [];
+        const tagDic = {};
+        productList.forEach(item => {
+            promiseList.push(new Promise(async (resolve) => {
+                const { product_id } = item;
+                const product = await DB.findOne('product', { _id: ObjectId(product_id) })
+                // product.group_id
+                const tagList = await DB.find('tag_to_group', { group_id: ObjectId(product.group_id) });
+                tagList.forEach(tag => {
+                    const { tag_id } = tag;
+                    tagDic[tag_id] = tagDic[tag_id] ? tagDic[tag_id] + 1 : 1;
+                })
+                resolve();
+            }))
+        })
+        await Promise.all(promiseList);
+
+        const tagList = Object.keys(tagDic).map(key => ({
+            tag_id: key,
+            cnt: tagDic[key],
+        })).sort((a, b) => b.cnt - a.cnt).filter((_, index) => (index < 10));
+
+        const tagToGroupList = await DB.find('tag_to_group', {
+            tag_id: { $in: tagList.map(item => ObjectId(item.tag_id)) },
+            status: 1,
+        })
+
+        const groupDic = {};
+        tagToGroupList.forEach(item => {
+            groupDic[item.group_id] = groupDic[item.group_id] ? groupDic[item.group_id] + 1 : 1;
+        })
+        const groupList = Object.keys(groupDic).map(key => ({
+            group_id: key,
+            cnt: groupDic[key],
+        })).sort((a, b) => b.cnt - a.cnt).filter((_, index) => (index < 10));
+
+        const res = await DB.find('product', {
+            group_id: { $in: groupList.map(item => ObjectId(item.group_id)) }
+        })
+
+        ctx.body = {
+            status: 1,
+            msg: '获取推荐游戏列表成功',
+            data: res
+        }
+    } catch (err) {
+        ctx.body = {
+            status: 0,
+            err: "获取推荐游戏列表失败",
+            data: err
+        }
+    }
+})
+
+router.get('/hot', async function (ctx, next) {
+    try {
+        const hotProductIdList = (await DB.find('product_to_user', { status: 1 })).map(item => ObjectId(item.product_id));
+
+        console.log(hotProductIdList);
+        const res = await DB.pagination('product', {
+            _id: {
+                $in: hotProductIdList
+            }
+        }, 0, 10);
+
+        ctx.body = {
+            status: 1,
+            msg: '获取热销游戏列表成功',
+            data: res
+        }
+    } catch (err) {
+        ctx.body = {
+            status: 0,
+            err: "获取热销游戏列表失败",
+            data: err
         }
     }
 })
