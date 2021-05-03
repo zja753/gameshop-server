@@ -1,3 +1,5 @@
+const ObjectId = require('mongodb').ObjectId;
+
 const router = require('koa-router')()
 
 router.prefix('/order')
@@ -5,56 +7,100 @@ router.prefix('/order')
 router.post('/create', async function (ctx, next) {
     // orderItemList = [{ product_id:xxxxxxx, quantity:23 },{ product_id:xxxxxxx, quantity:11 }]
     const {
-        orderItemList = []
+        orderItemList = [],
+        user_id,
     } = await ctx.request.body;
+
     if (!(orderItemList instanceof Array) || orderItemList.length === 0) {
-        ctx.body = {
+        return ctx.body = {
             status: 0,
             err: '订单中不能没有商品',
             data: {}
         }
-    } else {
-        try {
-            const productList = []
-            let totle_price = 0,
-                quantity = 0;
-            orderItemList.forEach(async item => {
-                const product = await findOne('product', {
-                    _id: item.product_id,
+    }
+
+    try {
+        const productList = []
+        const promiseList = [];
+        let totle_price = 0,
+            quantity = 0;
+        orderItemList.forEach(item => {
+            const curPromise = new Promise(async (resolve) => {
+                const product = await DB.findOne('product', {
+                    _id: ObjectId(item.product_id),
                     status: 1,
                 })
-                product.quantity = item.quantity
-                productList.push(product)
+                product.quantity = item.quantity;
+                productList.push(product);
                 totle_price += product.price * item.quantity;
-                quantity += item.quantity
+                quantity += item.quantity;
+                resolve();
             })
-            const order = await DB.insert('order', {
-                totle_price,
-                quantity
+            promiseList.push(curPromise);
+        })
+        await Promise.all(promiseList);
+        const order = await DB.insert('order', {
+            productList,
+            totle_price,
+            quantity,
+            user_id,
+            status: 1,
+        });
+        productList.forEach(async product => {
+            await DB.insert('order_to_product', {
+                order_id: order._id,
+                product_id: product._id,
+                quantity: product.quantity
             })
-            productList.forEach(async product => {
-                await DB.insert('order_to_product', {
-                    order_id: order._id,
-                    product_id: product._id,
-                    quantity: product.quantity
-                })
-            })
-            ctx.body = {
-                status: 1,
-                msg: '创建订单成功',
-                data: order
-            }
-        } catch (err) {
-            ctx.body = {
-                status: 0,
-                err: '创建订单失败',
-                data: err
-            }
-        }
+        });
+        ctx.body = {
+            status: 1,
+            msg: '创建订单成功',
+            data: order
+        };
+    } catch (err) {
+        ctx.body = {
+            status: 0,
+            err: '创建订单失败',
+            data: err
+        };
     }
+
 })
 
-// 订单应该是不需要修改的
+router.post('/pay', async function (ctx, next) {
+    // orderItemList = [{ product_id:xxxxxxx, quantity:23 },{ product_id:xxxxxxx, quantity:11 }]
+    const { order_id } = await ctx.request.body;
+    const order = await DB.findOne('order', { _id: ObjectId(order_id) });
+    const { productList, totle_price, quantity, user_id } = order;
+    const user = await DB.findOne('user', { _id: ObjectId(user_id) });
+
+    if (user.balance < totle_price) {
+        return ctx.body = {
+            status: 0,
+            err: '支付订单失败,账户里的钱不够支付订单！',
+            data: {},
+        }
+    }
+
+    // TODO: 查重，已经有的游戏就不能买
+
+    await DB.update('user', { _id: ObjectId(user_id) }, { balance: user.balance - totle_price });
+    const res = await DB.update('order', { _id: ObjectId(order_id) }, { status: 2 });
+    productList.forEach(async product => {
+        await DB.insert('product_to_user', {
+            product_id: product._id,
+            user_id,
+        })
+    })
+
+    return ctx.body = {
+        status: 1,
+        msg: '支付订单成功',
+        data: res
+    }
+
+})
 
 router.get('/fetch', async function (ctx, next) {
     const {
