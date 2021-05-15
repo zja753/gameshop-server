@@ -30,7 +30,7 @@ router.post("/register", async (ctx) => {
         password: hashPassword,
         email,
         nickName,
-        balance: 0,
+        balance: 100000,
         avatar: "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1600104621985&di=48f4ff75babdb2c0652913f5ff201955&imgtype=0&src=http%3A%2F%2Fb-ssl.duitang.com%2Fuploads%2Fitem%2F201603%2F06%2F20160306204517_i4Se8.jpeg"
       });
       ctx.body = {
