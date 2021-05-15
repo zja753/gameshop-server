@@ -154,8 +154,8 @@ router.post('/update', async function (ctx, next) {
 })
 
 router.get('/fetch', async function (ctx, next) {
-  const { page = 0, limit = 10, tag = '全部游戏' } = ctx.query
-  if (!['全部游戏', 'all'].includes(tag)) {
+  const { page = 0, limit = 10, tag = 'all' } = ctx.query
+  if (tag !== 'all') {
     const groupIdList = (await DB.find('tag_to_group', { tag_name: tag })).map(
       (item) => ObjectId(item.group_id)
     )
@@ -167,8 +167,7 @@ router.get('/fetch', async function (ctx, next) {
       page,
       limit
     )
-    const sz = productList.length
-    for (let i = 0; i < sz; i++) {
+    for (let i = 0; i < productList.length; i++) {
       const cur = productList[i]
       const tagList = await DB.find('tag_to_group', {
         group_id: ObjectId(cur.group_id),
@@ -190,14 +189,6 @@ router.get('/fetch', async function (ctx, next) {
       page,
       limit
     )
-    const sz = productList.length
-    for (let i = 0; i < sz; i++) {
-      const cur = productList[i]
-      const tagList = await DB.find('tag_to_group', {
-        group_id: ObjectId(cur.group_id),
-      })
-      cur.tagList = tagList.map((item) => item.tag_name)
-    }
     ctx.body = {
       status: 1,
       msg: '获取游戏列表成功',

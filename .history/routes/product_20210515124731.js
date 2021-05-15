@@ -190,14 +190,6 @@ router.get('/fetch', async function (ctx, next) {
       page,
       limit
     )
-    const sz = productList.length
-    for (let i = 0; i < sz; i++) {
-      const cur = productList[i]
-      const tagList = await DB.find('tag_to_group', {
-        group_id: ObjectId(cur.group_id),
-      })
-      cur.tagList = tagList.map((item) => item.tag_name)
-    }
     ctx.body = {
       status: 1,
       msg: '获取游戏列表成功',
