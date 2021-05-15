@@ -175,10 +175,15 @@ router.get('/fetch', async function (ctx, next) {
       })
       cur.tagList = tagList.map((item) => item.tag_name)
     }
+
+    const count = await DB.getCount('product', {
+      group_id: { $in: groupIdList },
+    })
     return (ctx.body = {
       status: 1,
       msg: '获取游戏列表成功',
       data: productList,
+      count,
     })
   }
   try {
@@ -198,10 +203,14 @@ router.get('/fetch', async function (ctx, next) {
       })
       cur.tagList = tagList.map((item) => item.tag_name)
     }
+    const count = await DB.getCount('product', {
+      status: 1,
+    })
     ctx.body = {
       status: 1,
       msg: '获取游戏列表成功',
       data: productList,
+      count,
     }
   } catch (err) {
     ctx.body = {
